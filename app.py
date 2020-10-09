@@ -67,9 +67,15 @@ def upload():
 
 						filename_list.append(file.filename)
 						if count == 0:
-							df1 = pd.read_excel(file)
+							if file.filename.endswith('xlsx'):
+								df1 = pd.read_excel(file)
+							elif file.filename.endswith('csv'):
+								df1 = pd.read_csv(file)
 						if count == 1:
-							df2 = pd.read_excel(file)
+							if file.filename.endswith('xlsx'):
+								df2 = pd.read_excel(file)
+							elif file.filename.endswith('csv'):
+								df2 = pd.read_csv(file)
 					else:
 						flash("Upload Excel or csv Only")
 						return redirect(url_for('index'))
@@ -85,7 +91,10 @@ def upload():
 
 					if allowed_file(file.filename):
 						filename_list.append(file.filename) 
-						df_single = pd.read_excel(file)
+						if file.filename.endswith('xlsx'):
+							df_single = pd.read_excel(file)
+						elif file.filename.endswith('csv'):
+							df_single = pd.read_csv(file)
 						filename_list.append(file.filename)
 					else:
 						flash("Upload xlsx or xls Only")
