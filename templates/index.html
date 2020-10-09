@@ -1,0 +1,177 @@
+{% extends "layout.html" %}
+{% block content %}
+<script src="{{ url_for('static', filename='jquery.min.js') }}"></script>
+<main role="main" class="container">
+  <div class="row">
+    <div class="col-md-8">
+  <h5>
+  	{% with messages = get_flashed_messages() %}
+    {% if messages %}
+      <div class="container">
+      {% for message in messages %}
+        <i>{{ message }}</i>
+      {% endfor %}
+      </div>
+    {% endif %}
+    {% endwith %}
+  </h5>
+    <h5><b><i>File Upload:(Excel/CSV)</i></b></h5>
+    <form action = "{{url_for('upload') }}" method = "POST" onSubmit="return validateform()" enctype="multipart/form-data">
+      <input type="hidden" id="decide_factor" value={{decide_factor}}>
+        <div class="form-group">
+          <div class="input-group mb-3">
+        <select name="filetype" class="custom-select" id="selectfiletype" oninput="file_upload_display()">
+              <option selected>Fuzzy Lookup</option>
+            </select>
+          </div>
+          <div class="input-group mb-3">
+              <p>  <a href="https://drive.google.com/file/d/1fin1LvT6vO3gzwDOvpARqfcoyf_9x9Te/view?usp=sharing" target="_blank">click here </a>to download sample file</p>
+          </div>
+            <div class="input-group mb-3">
+              <div class="custom-file" id="fileupload">
+                  <input type="file" class="custom-file-input" id="inputGroupFile01" name="file"/>
+                  <label class="custom-file-label" for="inputGroupFile01">Choose file 1</label>
+              </div>
+            </div>
+              <div class="input-group mb-3" id="fileuploaddiv">
+              <div class="custom-file">
+                  <input type="file" class="custom-file-input" id="inputGroupFile02" name="file"/>
+                  <label class="custom-file-label" for="inputGroupFile02">Choose file 2</label>
+              </div>
+            </div>
+            <div class="custom-control custom-checkbox" id="divcustomcheck">
+                <input type="checkbox" class="custom-control-input" id="customCheck" name="filecheck" value="True">
+                <label class="custom-control-label" for="customCheck"><b><i> Single File Fuzzy </i></b></label>
+            </div>
+            <div class="hidden">
+              <input type="hidden" value="False" name="filecheck">
+            </div>
+    	      <button type="submit" class="btn btn-outline-info my-2">Submit</button>
+        </div>  
+    </form>
+	<p><b>Instruction to use the Portal:</b>
+		<ol>
+		<b><li>Add a <u>Primary Key</u> (Add a column with number in your Excel/csv file so that each row have a unique value) --> <a href="https://drive.google.com/file/d/1fin1LvT6vO3gzwDOvpARqfcoyf_9x9Te/view?usp=sharing" target="_blank">see sample</a></li></b>
+			<b>
+			<li>Upload the files in excel or csv: 
+				<ul>
+					<li>Please make sure your column header starts from <i><u>FIRST ROW FIRST COLUMN</i></u></li>
+					<li>If you want to perform fuzzy from 2 files , upload both file as same format mentioned in step 1</li>
+					<li>If you want to perform fuzzy within single file, upload single file and check <u>Single File Fuzzy</u> option </li>
+					NOTE : When using <u>Single File Fuzzy</u>, the engine will not compare the content of same row with itself as it will always be a exact match ie 100% and will not be included in the final result
+				</ul>
+			</li>
+			</b>
+			<b><li>Click on Submit</li></b>
+			<b><li>After that Select the Primary Key and the column on which you want to perform fuzzy matching</li></b>
+			<b><li>Select the threshold so all the result which have matching % >= threshold will be selected</li></b>
+		</ol>
+	</p>
+</div>
+ 
+</div>
+</main>
+    <script type="text/javascript">
+            var uploadField = document.getElementById("inputGroupFile01");
+
+            uploadField.onchange = function() {
+                if(this.files[0].size > 2097152){
+                   alert("File must be less than 2MB for this demo!");
+                   this.value = "";
+                };
+            };
+    </script>
+
+      <script type="text/javascript">
+            var uploadField = document.getElementById("inputGroupFile02");
+
+            uploadField.onchange = function() {
+                if(this.files[0].size > 2097152){
+                   alert("File must be less than 2MB for this demo!");
+                   this.value = "";
+                };
+            };
+    </script>
+
+     <script>
+            $('#inputGroupFile01').on('change',function(){
+                var fileName = $(this).val();
+                $(this).next('.custom-file-label').html(fileName);
+            })
+        </script>
+
+        <script>
+            $('#inputGroupFile02').on('change',function(){
+                var fileName = $(this).val();
+                $(this).next('.custom-file-label').html(fileName);
+            })
+        </script>
+        
+        <script type="text/javascript">
+        $( document ).ready(function() {
+          var adminDecider=$('#decide_factor').val();
+          if(adminDecider=="1")
+            $('#Admin').css("display","block");
+        });
+        </script>
+
+        <script>
+          function file_upload_display(){
+            var a = document.getElementById("selectfiletype");
+            if (a.options[a.selectedIndex].value != "Fuzzy Lookup")
+            {
+               document.getElementById("fileuploaddiv").style.visibility = "hidden";
+               document.getElementById("divcustomcheck").style.visibility = "hidden";
+            }
+            if (a.options[a.selectedIndex].value == "Fuzzy Lookup")
+            {
+               document.getElementById("fileuploaddiv").style.visibility = "visible";
+               document.getElementById("divcustomcheck").style.visibility = "visible";
+            }
+          }
+          </script>
+          <script type="text/javascript">
+            function validateform()
+            {
+              if (document.getElementById("selectfiletype").value == "Fuzzy Lookup")
+              {
+              var file1 = document.getElementById("inputGroupFile01").files.length;
+              var file2 = document.getElementById("inputGroupFile02").files.length;
+              
+              var same_as_file = document.getElementById("customCheck").checked;
+              if (same_as_file == true){
+                if (file1 == 1 && file2 == 1){
+                  alert("Same File option Selected But 2 file Given");
+                  return false;
+                }
+                else{
+                      if (file1 == 0 && file2 ==0){
+                      alert("Atleast Upload 1 file");
+                      return false;
+                        }
+                  }
+                }
+              else{
+                if (file1 == 1 && file2 == 1)
+                  return true;
+                else
+                {
+                  alert("Please Upload Both Files");
+                  return false
+                }
+                
+                }
+              }
+              else
+              {
+                var file1 = document.getElementById("inputGroupFile01").files.length;
+                if (file1 == 0)
+                {
+                  alert("Please Upload Files");
+                  return false;
+                }
+            }
+          }
+          </script>
+         
+{% endblock content %}

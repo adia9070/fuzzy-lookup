@@ -1,0 +1,211 @@
+{% extends "layout.html" %}
+{% block content %}
+<script src="{{ url_for('static', filename='jquery.min.js') }}"></script>
+<form action ="{{url_for('fuzzstring') }}" onSubmit="return validateform()" method = "POST" enctype="multipart/form-data">
+    <input type="hidden" id="decide_factor" value={{decide_factor}}>
+<div class="container" id="container_class">
+    <h5>Welcome {{session_user}}</h5>
+<div class="row">
+    <div class="col-md-3">
+        <div class="form-group">
+                <label><b>Select Index ({{filename[0]}})</b></label>
+              <select name="employee" class="custom-select" id="index1">
+                    <option selected>Select Index</option>
+                    {%for name in column1%}
+                    <option value="{{ name }}">{{ name }}</option>
+                    {% endfor %}
+              </select>        
+          </div>
+    </div>
+    <div class="col-md-3">
+        <div class="form-group">
+                <label><b>Select Column ({{filename[0]}})</b></label>
+                 <select name="employee" class="custom-select" id="data1">
+                    <option selected>Select Column</option>
+                    {%for name in column1%}
+                    <option value="{{ name }}">{{ name }}</option>
+                    {% endfor %}
+                  </select>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="form-group">
+                <label><b>Select Index ({{filename[1]}})</b></label>
+                 <select name="vendor" class="custom-select" id="index2">
+                    <option selected>Select Index</option>
+                    {%for name in column2%}
+                    <option value="{{ name }}">{{ name }}</option>
+                    {% endfor %}
+                  </select>       
+              </div>
+    </div>
+    <div class="col-md-3">
+        <div class="form-group">
+                <label><b>Select Column ({{filename[1]}})</b></label>
+                 <select name="vendor" class="custom-select" id="data2">
+                    <option selected>Select Column</option>
+                    {%for name in column2%}
+                    <option value="{{ name }}">{{ name }}</option>
+                    {% endfor %}
+                  </select>
+        </div>
+    </div>
+</div>
+    <div class="row">
+    <div class="col-md-12">
+        <div class="form-group">
+        <label for="slider"><b>Range Slider:</b></label>  
+            <div class="slidecontainer">
+            <input type="range"  name ="range" min=25 max=99 value = 80 class="slider" oninput="showamount1(this.value)">
+            <label><p>Value:<span id="amount1">80</span></p></label>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="form-group">
+                <button type="submit" class="btn btn-outline-info my-2">Submit</button>
+            </div>
+        </div>
+    </div>
+</div>
+</form> 
+</div>
+<hr>
+<!-- Script -->	
+ <script>
+     function showamount1(newAmount){
+        document.getElementById('amount1').innerHTML = newAmount
+    }
+    function showamount2(newAmount){
+        document.getElementById('amount2').innerHTML = newAmount
+    }
+    function showamount3(newAmount){
+        document.getElementById('amount3').innerHTML = newAmount
+    }
+    function showamount4(newAmount){
+        document.getElementById('amount4').innerHTML = newAmount
+    }
+    function showamount5(newAmount){
+        document.getElementById('amount5').innerHTML = newAmount
+    }
+    function showamount6(newAmount){
+        document.getElementById('amount6').innerHTML = newAmount
+    }
+
+    $(document).ready(function(e){
+    var count = 2
+    
+    $("#add").click(function(e){
+
+    var html = '<div>'+
+    '<hr>'+
+    '<hr>'+
+    '<div>'+
+    '<div class="row">'+
+    '<div class="col-md-6">'+
+    '<div class="form-group">'+
+    '<label>'+
+    '<b>Select Column ({{filename[0]}})</b>'+
+    '</label>'+
+    '<select name="employee" class="custom-select1 custom-select" id="data1">'+
+    '<option selected>Select Column</option>'+
+    '{%for name in column1%}'+
+    '<option value="{{ name }}">{{ name }}</option>'+
+    '{% endfor %}'+
+    '</select>'+
+    '</div>'+
+    '</div>'+
+    '<div class="col-md-6">'+
+    '<div class="form-group">'+
+    '<label>'+
+    '<b>Select Column ({{filename[1]}})</b>'+
+    '</label><select name="vendor" class="custom-select1 custom-select" id="data2">'+
+    '<option selected>Select Column</option>'+
+    '{%for name in column2%}'+
+    '<option value="{{ name }}">{{ name }}</option>'+
+    '{% endfor %}'+
+    '</select>'+
+    '</div>'+
+    '</div>'+
+    '</div>'+
+    '</div>'+
+    '<div class="row">'+
+    '<div class="col-md-12">'+
+    '<div class="form-group">'+
+    '<label for="slider">'+
+    '<b>Range Slider:</b>'+
+    '</label>'+
+    '<div class="slidecontainer">'+
+    '<input type="range"  name ="range" min=25 max=99 value = 80 class="slider" oninput="showamount'+count+'(this.value)">'+
+    '<label><p>Value:<span id="amount'+count+'">80</span></p></label>'+
+    '</div></div></div></div>'+
+    '<a href="#" id="remove"><button class="btn btn-outline-danger">Remove</button></a></div>'+
+    '</div>';
+
+    if (count <=6){
+    count++;
+    $("#container_class").append(html)
+        }
+    });
+
+    $("#container_class").on('click',"#remove",function(e) {
+        count--;
+        $(this).parent("div").remove();
+    });
+});
+
+function validateform(){
+    var index1 = document.getElementById('index1').value;
+    if (index1=='Select Index'){
+        alert("Select Index Column");
+        return false;}
+    
+
+    var data1 = document.getElementById('data1').value;
+    if (data1 == 'Select Column'){
+        alert("Select column from {{filename[0]}}");
+        return false;}
+
+    var index2 = document.getElementById('index2').value;
+    if (index2=='Select Index'){
+        alert("Select Index Column");
+        return false;} 
+
+
+    var data2 = document.getElementById('data2').value;
+    if (data2 == 'Select Column'){
+        alert("Select column from {{filename[1]}}");
+        return false;}
+
+
+    var flag=false;
+     $( ".custom-select1" ).each(function() {
+        var selectValue=$(this).val();
+        if (selectValue == "Select Column")
+        {
+            flag=true;
+            alert("Select Column");
+            return false;
+        }
+
+        });
+     if(flag)
+        return false;
+    }
+</script>
+
+<script type="text/javascript">
+        $( document ).ready(function() {
+          var adminDecider=$('#decide_factor').val();
+          if(adminDecider=="1")
+            $('#Admin').css("display","block");
+        });
+        </script>
+<!-- Script End Here -->
+
+{% endblock content %}
