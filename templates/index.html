@@ -26,7 +26,7 @@
             </select>
           </div>
           <div class="input-group mb-3">
-              <p>  <a href="http://example.com/files/myfile.pdf" target="_blank">click here</a>to download sample file</p>
+              <p>  <a href="https://drive.google.com/file/d/1fin1LvT6vO3gzwDOvpARqfcoyf_9x9Te/view?usp=sharing" target="_blank">click here</a>to download sample file</p>
           </div>
             <div class="input-group mb-3">
               <div class="custom-file" id="fileupload">
@@ -42,7 +42,7 @@
             </div>
             <div class="custom-control custom-checkbox" id="divcustomcheck">
                 <input type="checkbox" class="custom-control-input" id="customCheck" name="filecheck" value="True">
-                <label class="custom-control-label" for="customCheck"><b><i> Same as File1 </i></b></label>
+                <label class="custom-control-label" for="customCheck"><b><i> Single File Fuzzy </i></b></label>
             </div>
             <div class="hidden">
               <input type="hidden" value="False" name="filecheck">
@@ -50,7 +50,24 @@
     	      <button type="submit" class="btn btn-outline-info my-2">Submit</button>
         </div>  
     </form>
-    <label><b><i>Please Upload the file and click on submit for functionality</i></b></label>
+    <p><b>Instruction to use the Portal:</b>
+		<ol>
+		<b><li>Add a <u>Primary Key</u> (Add a column with number in your Excel/csv file so that each row have a unique value) --> <a href="https://drive.google.com/file/d/1fin1LvT6vO3gzwDOvpARqfcoyf_9x9Te/view?usp=sharing" target="_blank">see sample</a></li></b>
+			<b>
+			<li>Upload the files in excel or csv: 
+				<ul>
+					<li>Please make sure your column header starts from <i><u>FIRST ROW FIRST COLUMN</i></u></li>
+					<li>If you want to perform fuzzy from 2 files , upload both file as same format mentioned in step 1</li>
+					<li>If you want to perform fuzzy within single file, upload single file and check <u>Single File Fuzzy</u> option </li>
+					NOTE : When using <u>Single File Fuzzy</u>, the engine will not compare the content of same row with itself as it will always be a exact match ie 100% and will not be included in the final result
+				</ul>
+			</li>
+			</b>
+			<b><li>Click on Submit</li></b>
+			<b><li>After that Select the Primary Key and the column on which you want to perform fuzzy matching</li></b>
+			<b><li>Select the threshold so all the result which have matching % >= threshold will be selected</li></b>
+		</ol>
+	</p>
 </div>
  
 </div>
