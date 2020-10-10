@@ -1,22 +1,17 @@
 import os
 import re
 import time
-import urllib
 import pandas as pd
-from io import BytesIO
 from datetime import timedelta
-from sqlalchemy import create_engine
 from flask import Flask, redirect, url_for, render_template , request, flash, send_file, session, g
 
 #User Defined
 from fuzzystring import tfidf, send_tfidf_complete_information
 #############
 
-df1 = None
-df2 = None
-filename1 = None
-filename2 = None
-filecheck = None
+
+file_upload_by_user = {}
+visitor = 0
 decide_factor = 0
 
 allowed_extension = set(['xls','xlsx','csv'])
@@ -34,7 +29,12 @@ app.config['SECRET_KEY'] = 'd3b7883041c1b79a0995b4afd25ccc99'
 @app.route("/")
 @app.route('/index')
 def index():
-	session['username'] = 'Guest'
+	global visitor
+	global decide_factor
+
+	visitor = visitor + 1
+
+	session['username'] = visitor
 	return render_template('index.html', session_user = session['username'], decide_factor = decide_factor)
 
 
@@ -42,11 +42,7 @@ def index():
 def upload():
 
 	global decide_factor
-	global df1
-	global df2
-	global filename1
-	global filename2
-	global filecheck
+	global file_upload_by_user
 
 	filename_list = list()
 	if request.method == 'POST':
@@ -116,50 +112,23 @@ def upload():
 			column_name1 = df1.columns.values
 			column_name2 = df2.columns.values
 			filecheck = request.form["filecheck"]
+			print(session['username'])
+			file_upload_by_user[session['username']] = [df1, df2, filecheck]
 
-		
 			return render_template('fuzzstring.html', column1 = column_name1, column2 = column_name2, filename= filename_list, session_user = session['username'], decide_factor = decide_factor)
-
-		else:
-			#Non Fuzzy Part Begin
-			if no_of_file_uploaded != 1:
-				flash("No File Uploaded")
-				return redirect(url_for('index'))
-			for count, file in enumerate(request.files.getlist('file')):
-
-				if file.filename == '':
-						continue
-
-				if allowed_file(file.filename):
-					filename_list.append(file.filename) 
-					df1 = pd.read_excel(file)
-					filename_list.append(file.filename)
-				else:
-					flash("Upload xlsx or xls Only")
-					return redirect(url_for('index'))
-
-			filename1 = filename_list[0]
-			column_name1 = df1.columns.values
-
-			if request.form['filetype'] == "Pan Validation":
-				return render_template('validatepan.html', column1 = column_name1, filename = filename_list, session_user = session['username'], decide_factor = decide_factor)
-
-			if request.form['filetype'] == "GSTIN Validation":
-				return render_template('validategstin.html', column1 = column_name1, filename = filename_list, session_user = session['username'], decide_factor = decide_factor)
-
-			if request.form['filetype'] == "Aadhar Card Validation":
-				return render_template('validateaadhar.html', column1 = column_name1, filename = filename_list, session_user = session['username'], decide_factor = decide_factor)
 	
 	return redirect(url_for('index'))	
 		
 @app.route('/fuzzstring', methods=['GET','POST'])
 def fuzzstring():
 
-	global filename1
-	global filename2
+	print("fuzzy got the session", session['username'])
 	global decide_factor
-	global df1
-	global df2
+	global file_upload_by_user
+
+	df1 = file_upload_by_user[session['username']][0]
+	df2 = file_upload_by_user[session['username']][1]
+	filecheck = file_upload_by_user[session['username']][2]
 
 	if request.method == 'POST':
 		username = session['username']
@@ -183,6 +152,9 @@ def fuzzstring():
 			reference_id.append(dataframe_rid)	
 			dataframe_score = result["similarity_score"].tolist()
 			score.append(dataframe_score)
+
+		file_upload_by_user.pop(session['username'],None)
+		print(file_upload_by_user)
 
 		selected_columns = len(reference_id)
 		return complete_result.to_html()
