@@ -1,7 +1,10 @@
 import os
+import logging
 import re
 import time
 import pandas as pd
+import redis
+import pyarrow as pa
 from datetime import timedelta
 from flask import Flask, redirect, url_for, render_template , request, flash, send_file, session, g
 
@@ -10,8 +13,9 @@ from fuzzystring import tfidf, send_tfidf_complete_information
 #############
 
 
-file_upload_by_user = {}
-visitor = 0
+r = r = redis.StrictRedis(host='redis-14479.c73.us-east-1-2.ec2.cloud.redislabs.com', port=14479, db=0, password='sLQIFi4OW5E3qbksBF7XmrNSzprx1YwO')
+r.set('visitor', 0)
+
 decide_factor = 0
 
 allowed_extension = set(['xls','xlsx','csv'])
@@ -29,10 +33,12 @@ app.config['SECRET_KEY'] = 'd3b7883041c1b79a0995b4afd25ccc99'
 @app.route("/")
 @app.route('/index')
 def index():
-	global visitor
 	global decide_factor
 
-	visitor = visitor + 1
+	visitor = r.get('visitor').decode('utf-8')
+	visitor = int(visitor) + 1
+
+	r.set('visitor', visitor)
 
 	session['username'] = visitor
 	return render_template('index.html', session_user = session['username'], decide_factor = decide_factor)
@@ -40,9 +46,7 @@ def index():
 
 @app.route('/upload', methods=['GET','POST'])
 def upload():
-
 	global decide_factor
-	global file_upload_by_user
 
 	filename_list = list()
 	if request.method == 'POST':
@@ -67,11 +71,21 @@ def upload():
 								df1 = pd.read_excel(file)
 							elif file.filename.endswith('csv'):
 								df1 = pd.read_csv(file)
+							
+							key = str(session['username']) + 'df1'
+							context = pa.default_serialization_context()
+							r.set(key, context.serialize(df1).to_buffer().to_pybytes(), 900)
+
 						if count == 1:
 							if file.filename.endswith('xlsx'):
 								df2 = pd.read_excel(file)
 							elif file.filename.endswith('csv'):
 								df2 = pd.read_csv(file)
+							
+							key = str(session['username']) + 'df2'
+							context = pa.default_serialization_context()
+							r.set(key, context.serialize(df2).to_buffer().to_pybytes(), 900)
+
 					else:
 						flash("Upload Excel or csv Only")
 						return redirect(url_for('index'))
@@ -92,6 +106,11 @@ def upload():
 						elif file.filename.endswith('csv'):
 							df_single = pd.read_csv(file)
 						filename_list.append(file.filename)
+
+						key = str(session['username']) + 'df'
+						context = pa.default_serialization_context()
+						r.set(key, context.serialize(df_single).to_buffer().to_pybytes())
+
 					else:
 						flash("Upload xlsx or xls Only")
 						return redirect(url_for('index'))
@@ -112,23 +131,28 @@ def upload():
 			column_name1 = df1.columns.values
 			column_name2 = df2.columns.values
 			filecheck = request.form["filecheck"]
-			print(session['username'])
-			file_upload_by_user[session['username']] = [df1, df2, filecheck]
 
+			key = str(session['username']) + 'filecheck'
+			r.set(key, filecheck, 900)
+			
+			print("upload got the session", session['username'])
 			return render_template('fuzzstring.html', column1 = column_name1, column2 = column_name2, filename= filename_list, session_user = session['username'], decide_factor = decide_factor)
-	
+
 	return redirect(url_for('index'))	
 		
 @app.route('/fuzzstring', methods=['GET','POST'])
 def fuzzstring():
-
-	print("fuzzy got the session", session['username'])
 	global decide_factor
-	global file_upload_by_user
+	context = pa.default_serialization_context()
 
-	df1 = file_upload_by_user[session['username']][0]
-	df2 = file_upload_by_user[session['username']][1]
-	filecheck = file_upload_by_user[session['username']][2]
+	filecheck = r.get(str(session['username'])+'filecheck')
+	if filecheck.decode('utf-8') == 'True':
+		df1 = context.deserialize(r.get(str(session['username'])+'df'))
+		df2 = context.deserialize(r.get(str(session['username'])+'df'))
+	else:
+		df1 = context.deserialize(r.get(str(session['username'])+'df1'))
+		df2 = context.deserialize(r.get(str(session['username'])+'df2'))
+	
 
 	if request.method == 'POST':
 		username = session['username']
@@ -145,22 +169,26 @@ def fuzzstring():
 		summarys = df1[index_column_one].tolist()
 
 		for count, (fuzzycol1, fuzzycol2, threshold) in enumerate(zip(request_at1[1:], request_at2[1:], threshold_list)):
-			result = tfidf(df1, df2, index_column_one, index_column_two, fuzzycol1, fuzzycol2, int(threshold), filecheck)
+			result = tfidf(df1, df2, index_column_one, index_column_two, fuzzycol1, fuzzycol2, int(threshold), filecheck.decode('utf-8'))
 			complete_result = send_tfidf_complete_information(df1, df2, result, index_column_one, index_column_two, fuzzycol1, fuzzycol2)
 			
 			dataframe_rid = result["Refernce_id_one"].tolist()
 			reference_id.append(dataframe_rid)	
 			dataframe_score = result["similarity_score"].tolist()
 			score.append(dataframe_score)
+		
+		r.delete(str(session['username'])+'df')
+		r.delete(str(session['username'])+'df1')
+		r.delete(str(session['username'])+'df2')
+		r.delete(str(session['username'])+'filecheck')
 
-		file_upload_by_user.pop(session['username'],None)
-		print(file_upload_by_user)
-
-		selected_columns = len(reference_id)
 		return complete_result.to_html()
 
 	return redirect(url_for('index'))
 	
 
 if __name__ == '__main__':
-   app.run(debug=True)
+	gunicorn_logger = logging.getLogger('gunicorn.error')
+	app.logger.handlers = gunicorn_logger.handlers
+	app.logger.setLevel(gunicorn_logger.level)
+	app.run(debug=True)
