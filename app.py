@@ -135,7 +135,6 @@ def upload():
 			key = str(session['username']) + 'filecheck'
 			r.set(key, filecheck, 900)
 			
-			print("upload got the session", session['username'])
 			return render_template('fuzzstring.html', column1 = column_name1, column2 = column_name2, filename= filename_list, session_user = session['username'], decide_factor = decide_factor)
 
 	return redirect(url_for('index'))	
@@ -188,7 +187,4 @@ def fuzzstring():
 	
 
 if __name__ == '__main__':
-	gunicorn_logger = logging.getLogger('gunicorn.error')
-	app.logger.handlers = gunicorn_logger.handlers
-	app.logger.setLevel(gunicorn_logger.level)
-	app.run(debug=True)
+	app.run(debug=False)
